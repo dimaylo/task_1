@@ -59,6 +59,43 @@ func GetMessage(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(messages)
 }
 
+func UpdateMessage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var msg Message
+	result := DB.First(&msg, id)
+
+	if result.Error != nil {
+		http.Error(w, "Message not found", http.StatusNotFound)
+		return
+	}
+	var updatedMessage Message
+	err := json.NewDecoder(r.Body).Decode(&updatedMessage)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+	msg.Task = updatedMessage.Task
+	msg.is_done = updatedMessage.is_done
+	DB.Save(&msg)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(msg)
+}
+
+func DeleteMessage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	var msg Message
+	result := DB.First(&msg, id)
+	if result.Error != nil {
+		http.Error(w, "Message not found", http.StatusNotFound)
+		return
+	}
+	DB.Delete(&msg)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func main() {
 	InitDB()
 	DB.AutoMigrate(&Message{})
@@ -68,5 +105,8 @@ func main() {
 	router.HandleFunc("/api/task", PostHandler).Methods("POST")
 	router.HandleFunc("/api/messages", CreateMessage).Methods("POST")
 	router.HandleFunc("/api/messages", GetMessage).Methods("GET")
+	router.HandleFunc("/api/messages", GetMessage).Methods("GET")
+	router.HandleFunc("/api/messages/{id}", UpdateMessage).Methods("PUT")
+	router.HandleFunc("/api/messages/{id}", DeleteMessage).Methods("DELETE")
 	http.ListenAndServe(":8080", router)
 }
