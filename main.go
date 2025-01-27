@@ -7,6 +7,15 @@ import (
 	"net/http"
 )
 
+package main
+
+import (
+"encoding/json"
+"fmt"
+"github.com/gorilla/mux"
+"net/http"
+)
+
 var task string
 
 type requestBody struct {
