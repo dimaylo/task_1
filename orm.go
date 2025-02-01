@@ -4,6 +4,6 @@ import "gorm.io/gorm"
 
 type Message struct {
 	gorm.Model
-	Task    string `json:"task"`
-	is_done bool   `json:"is_done"`
+	Task   string `json:"task"`
+	IsDone bool   `json:"isDone"`
 }
