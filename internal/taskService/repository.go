@@ -1,6 +1,8 @@
 package taskService
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type TaskRepository interface {
 	CreateTask(task Task) (Task, error)
@@ -23,9 +25,9 @@ func (r *taskRepository) CreateTask(task Task) (Task, error) {
 }
 
 func (r *taskRepository) GetAllTasks() ([]Task, error) {
-	var tasks []Task
-	err := r.db.Find(&tasks).Error
-	return tasks, err
+	var task []Task
+	err := r.db.Find(&task).Error
+	return task, err
 }
 
 func (r *taskRepository) UpdateTaskByID(id uint, updated Task) (Task, error) {
@@ -42,7 +44,7 @@ func (r *taskRepository) UpdateTaskByID(id uint, updated Task) (Task, error) {
 
 func (r *taskRepository) DeleteTaskByID(id uint) error {
 	var existing Task
-	err := r.db.First(&existing, id).Error
+	err := r.db.Delete(&existing, id).Error
 	if err != nil {
 		return err
 	}

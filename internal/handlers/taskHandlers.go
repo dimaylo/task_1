@@ -1,12 +1,11 @@
 package handlers
 
 import (
+	"REST_API/internal/taskService"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
-
-	"REST_API/internal/taskService"
-	"github.com/gorilla/mux"
 )
 
 type Handler struct {
@@ -14,19 +13,7 @@ type Handler struct {
 }
 
 func NewHandler(service *taskService.TaskService) *Handler {
-	return &Handler{
-		service: service,
-	}
-}
-
-func (h *Handler) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
-	tasks, err := h.service.GetAllTasks()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tasks)
+	return &Handler{service: service}
 }
 
 func (h *Handler) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +30,16 @@ func (h *Handler) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(createdTask)
+}
+
+func (h *Handler) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
+	tasks, err := h.service.GetAllTasks()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tasks)
 }
 
 func (h *Handler) UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +75,7 @@ func (h *Handler) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.service.DeleteTask(uint(id))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusNoContent)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

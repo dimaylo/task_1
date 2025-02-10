@@ -1,19 +1,17 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
 	"REST_API/internal/database"
 	"REST_API/internal/handlers"
 	"REST_API/internal/taskService"
 	"github.com/gorilla/mux"
+	"log"
+	"net/http"
 )
 
 func main() {
-	database.InitDB()
-	database.DB.AutoMigrate(&taskService.Task{})
 
+	database.InitDB()
 	repo := taskService.NewTaskRepository(database.DB)
 	service := taskService.NewService(repo)
 	handler := handlers.NewHandler(service)
@@ -24,6 +22,6 @@ func main() {
 	router.HandleFunc("/api/tasks/{id}", handler.UpdateTaskHandler).Methods("PUT")
 	router.HandleFunc("/api/tasks/{id}", handler.DeleteTaskHandler).Methods("DELETE")
 
-	log.Println("Server running on port 8080")
+	log.Println("Сервер запущен на порту 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
