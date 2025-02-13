@@ -1,27 +1,31 @@
 package main
 
 import (
+	"log"
+
 	"REST_API/internal/database"
 	"REST_API/internal/handlers"
 	"REST_API/internal/taskService"
-	"github.com/gorilla/mux"
-	"log"
-	"net/http"
+	"REST_API/internal/web/tasks"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
-
 	database.InitDB()
+
 	repo := taskService.NewTaskRepository(database.DB)
 	service := taskService.NewService(repo)
 	handler := handlers.NewHandler(service)
 
-	router := mux.NewRouter()
-	router.HandleFunc("/api/tasks", handler.GetTasksHandler).Methods("GET")
-	router.HandleFunc("/api/tasks", handler.PostTaskHandler).Methods("POST")
-	router.HandleFunc("/api/tasks/{id}", handler.UpdateTaskHandler).Methods("PUT")
-	router.HandleFunc("/api/tasks/{id}", handler.DeleteTaskHandler).Methods("DELETE")
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	log.Println("Сервер запущен на порту 8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	strictHandler := tasks.NewStrictHandler(handler, nil)
+
+	tasks.RegisterHandlers(e, strictHandler)
+
+	log.Fatal(e.Start(":8080"))
 }

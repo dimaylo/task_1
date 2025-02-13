@@ -1,82 +1,138 @@
 package handlers
 
 import (
-	"REST_API/internal/taskService"
-	"encoding/json"
-	"github.com/gorilla/mux"
-	"net/http"
+	"context"
 	"strconv"
+
+	"REST_API/internal/taskService"
+	"REST_API/internal/web/tasks"
 )
 
 type Handler struct {
-	service *taskService.TaskService
+	Service *taskService.TaskService
 }
 
 func NewHandler(service *taskService.TaskService) *Handler {
-	return &Handler{service: service}
+	return &Handler{Service: service}
 }
 
-func (h *Handler) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
-	var task taskService.Task
-	err := json.NewDecoder(r.Body).Decode(&task)
+// Метод для GET /tasks
+func (h *Handler) GetTasks(
+	ctx context.Context,
+	_ tasks.GetTasksRequestObject,
+) (tasks.GetTasksResponseObject, error) {
+
+	all, err := h.Service.GetAllTasks()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		// В strict-схеме нет "дефолтного" ответа под ошибку,
+		// поэтому если хотим кинуть ошибку, можно вернуть nil, err
+		return nil, err
 	}
-	createdTask, err := h.service.CreateTask(task)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+
+	resp := make(tasks.GetTasks200JSONResponse, 0, len(all))
+	for _, t := range all {
+		id := uint(t.ID)
+		taskVal := t.Task
+		isDone := t.IsDone
+		resp = append(resp, tasks.Task{
+			Id:     &id,
+			Task:   &taskVal,
+			IsDone: &isDone,
+		})
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(createdTask)
+	return resp, nil
 }
 
-func (h *Handler) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
-	tasks, err := h.service.GetAllTasks()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+// Метод для POST /tasks
+func (h *Handler) PostTasks(
+	ctx context.Context,
+	req tasks.PostTasksRequestObject,
+) (tasks.PostTasksResponseObject, error) {
+
+	body := req.Body
+	if body == nil {
+		return nil, nil // или вернуть ошибку
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tasks)
+
+	newTask := taskService.Task{
+		Task:   ptrToStr(body.Task),
+		IsDone: ptrToBool(body.IsDone),
+	}
+	created, err := h.Service.CreateTask(newTask)
+	if err != nil {
+		return nil, err
+	}
+	id := uint(created.ID)
+	taskVal := created.Task
+	isDoneVal := created.IsDone
+	return tasks.PostTasks201JSONResponse{
+		Id:     &id,
+		Task:   &taskVal,
+		IsDone: &isDoneVal,
+	}, nil
 }
 
-func (h *Handler) UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	strID := vars["id"]
-	id, err := strconv.Atoi(strID)
+// Метод для DELETE /tasks/{id} (видите, в api.gen.go он называется DeleteTasksId)
+func (h *Handler) DeleteTasksId(
+	ctx context.Context,
+	req tasks.DeleteTasksIdRequestObject,
+) (tasks.DeleteTasksIdResponseObject, error) {
+
+	idStr := req.Id
+	idUint, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		// Т.к. в strict-схеме не описан 400 или 500, можно вернуть nil, err
+		return nil, err
 	}
-	var updated taskService.Task
-	err = json.NewDecoder(r.Body).Decode(&updated)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	if err := h.Service.DeleteTask(uint(idUint)); err != nil {
+		return nil, err
 	}
-	updatedTask, err := h.service.UpdateTask(uint(id), updated)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedTask)
+	return tasks.DeleteTasksId204Response{}, nil
 }
 
-func (h *Handler) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	strID := vars["id"]
-	id, err := strconv.Atoi(strID)
+// Метод для PATCH /tasks/{id} (в api.gen.go: PatchTasksId)
+func (h *Handler) PatchTasksId(
+	ctx context.Context,
+	req tasks.PatchTasksIdRequestObject,
+) (tasks.PatchTasksIdResponseObject, error) {
+
+	idStr := req.Id
+	idUint, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return nil, err
 	}
-	err = h.service.DeleteTask(uint(id))
+	body := req.Body
+	if body == nil {
+		return nil, nil // или вернуть err
+	}
+	updated := taskService.Task{
+		Task:   ptrToStr(body.Task),
+		IsDone: ptrToBool(body.IsDone),
+	}
+	res, err := h.Service.UpdateTask(uint(idUint), updated)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNoContent)
-		return
+		return nil, err
 	}
-	w.WriteHeader(http.StatusNoContent)
+	id := uint(res.ID)
+	taskVal := res.Task
+	isDoneVal := res.IsDone
+	return tasks.PatchTasksId200JSONResponse{
+		Id:     &id,
+		Task:   &taskVal,
+		IsDone: &isDoneVal,
+	}, nil
+}
+
+func ptrToStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func ptrToBool(b *bool) bool {
+	if b == nil {
+		return false
+	}
+	return *b
 }
