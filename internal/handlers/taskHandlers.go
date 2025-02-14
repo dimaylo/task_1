@@ -57,7 +57,7 @@ func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObj
 
 func (h *Handler) DeleteTasksTaskId(_ context.Context, request tasks.DeleteTasksTaskIdRequestObject) (tasks.DeleteTasksTaskIdResponseObject, error) {
 	taskID := request.TaskId
-	if err := h.Service.DeleteTask(taskID); err != nil {
+	if err := h.Service.DeleteTaskByID(taskID); err != nil {
 		return nil, err
 	}
 	response := tasks.DeleteTasksTaskId204Response{}
@@ -71,7 +71,7 @@ func (h *Handler) PatchTasksTaskId(_ context.Context, request tasks.PatchTasksTa
 		Task:   *taskRequest.Task,
 		IsDone: *taskRequest.IsDone,
 	}
-	UpdatedTask, err := h.Service.UpdateTask(taskID, TaskToUpdate)
+	UpdatedTask, err := h.Service.UpdateTaskByID(taskID, TaskToUpdate)
 
 	if err != nil {
 		return nil, err
