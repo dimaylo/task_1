@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"context"
-	"strconv"
-
 	"REST_API/internal/taskService"
 	"REST_API/internal/web/tasks"
+	"golang.org/x/net/context"
 )
 
 type Handler struct {
@@ -13,126 +11,76 @@ type Handler struct {
 }
 
 func NewHandler(service *taskService.TaskService) *Handler {
-	return &Handler{Service: service}
+	return &Handler{
+		Service: service,
+	}
 }
 
-// Метод для GET /tasks
-func (h *Handler) GetTasks(
-	ctx context.Context,
-	_ tasks.GetTasksRequestObject,
-) (tasks.GetTasksResponseObject, error) {
-
-	all, err := h.Service.GetAllTasks()
-	if err != nil {
-		// В strict-схеме нет "дефолтного" ответа под ошибку,
-		// поэтому если хотим кинуть ошибку, можно вернуть nil, err
-		return nil, err
-	}
-
-	resp := make(tasks.GetTasks200JSONResponse, 0, len(all))
-	for _, t := range all {
-		id := uint(t.ID)
-		taskVal := t.Task
-		isDone := t.IsDone
-		resp = append(resp, tasks.Task{
-			Id:     &id,
-			Task:   &taskVal,
-			IsDone: &isDone,
-		})
-	}
-	return resp, nil
-}
-
-// Метод для POST /tasks
-func (h *Handler) PostTasks(
-	ctx context.Context,
-	req tasks.PostTasksRequestObject,
-) (tasks.PostTasksResponseObject, error) {
-
-	body := req.Body
-	if body == nil {
-		return nil, nil // или вернуть ошибку
-	}
-
-	newTask := taskService.Task{
-		Task:   ptrToStr(body.Task),
-		IsDone: ptrToBool(body.IsDone),
-	}
-	created, err := h.Service.CreateTask(newTask)
+func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
+	allTasks, err := h.Service.GetAllTasks()
 	if err != nil {
 		return nil, err
 	}
-	id := uint(created.ID)
-	taskVal := created.Task
-	isDoneVal := created.IsDone
-	return tasks.PostTasks201JSONResponse{
-		Id:     &id,
-		Task:   &taskVal,
-		IsDone: &isDoneVal,
-	}, nil
+
+	response := tasks.GetTasks200JSONResponse{}
+
+	for _, tsk := range allTasks {
+		task := tasks.Task{
+			Id:     &tsk.ID,
+			Task:   &tsk.Task,
+			IsDone: &tsk.IsDone,
+		}
+		response = append(response, task)
+	}
+
+	return response, nil
 }
 
-// Метод для DELETE /tasks/{id} (видите, в api.gen.go он называется DeleteTasksId)
-func (h *Handler) DeleteTasksId(
-	ctx context.Context,
-	req tasks.DeleteTasksIdRequestObject,
-) (tasks.DeleteTasksIdResponseObject, error) {
-
-	idStr := req.Id
-	idUint, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		// Т.к. в strict-схеме не описан 400 или 500, можно вернуть nil, err
-		return nil, err
+func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
+	taskRequest := request.Body
+	taskToCreate := taskService.Task{
+		Task:   *taskRequest.Task,
+		IsDone: *taskRequest.IsDone,
 	}
-	if err := h.Service.DeleteTask(uint(idUint)); err != nil {
-		return nil, err
-	}
-	return tasks.DeleteTasksId204Response{}, nil
-}
+	createdTask, err := h.Service.CreateTask(taskToCreate)
 
-// Метод для PATCH /tasks/{id} (в api.gen.go: PatchTasksId)
-func (h *Handler) PatchTasksId(
-	ctx context.Context,
-	req tasks.PatchTasksIdRequestObject,
-) (tasks.PatchTasksIdResponseObject, error) {
-
-	idStr := req.Id
-	idUint, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		return nil, err
 	}
-	body := req.Body
-	if body == nil {
-		return nil, nil // или вернуть err
+	response := tasks.PostTasks201JSONResponse{
+		Id:     &createdTask.ID,
+		Task:   &createdTask.Task,
+		IsDone: &createdTask.IsDone,
 	}
-	updated := taskService.Task{
-		Task:   ptrToStr(body.Task),
-		IsDone: ptrToBool(body.IsDone),
+	return response, nil
+}
+
+func (h *Handler) DeleteTasksTaskId(_ context.Context, request tasks.DeleteTasksTaskIdRequestObject) (tasks.DeleteTasksTaskIdResponseObject, error) {
+	taskID := request.TaskId
+	if err := h.Service.DeleteTask(taskID); err != nil {
+		return nil, err
 	}
-	res, err := h.Service.UpdateTask(uint(idUint), updated)
+	response := tasks.DeleteTasksTaskId204Response{}
+	return response, nil
+}
+
+func (h *Handler) PatchTasksTaskId(_ context.Context, request tasks.PatchTasksTaskIdRequestObject) (tasks.PatchTasksTaskIdResponseObject, error) {
+	taskRequest := request.Body
+	taskID := request.TaskId
+	TaskToUpdate := taskService.Task{
+		Task:   *taskRequest.Task,
+		IsDone: *taskRequest.IsDone,
+	}
+	UpdatedTask, err := h.Service.UpdateTaskByID(taskID, TaskToUpdate)
+
 	if err != nil {
 		return nil, err
 	}
-	id := uint(res.ID)
-	taskVal := res.Task
-	isDoneVal := res.IsDone
-	return tasks.PatchTasksId200JSONResponse{
-		Id:     &id,
-		Task:   &taskVal,
-		IsDone: &isDoneVal,
-	}, nil
-}
 
-func ptrToStr(s *string) string {
-	if s == nil {
-		return ""
+	response := tasks.PatchTasksTaskId200JSONResponse{
+		Id:     &UpdatedTask.ID,
+		Task:   &UpdatedTask.Task,
+		IsDone: &UpdatedTask.IsDone,
 	}
-	return *s
-}
-
-func ptrToBool(b *bool) bool {
-	if b == nil {
-		return false
-	}
-	return *b
+	return response, nil
 }

@@ -5,7 +5,7 @@ info:
 paths:
   /tasks:
     get:
-      summary: Get tasks
+      summary: Get all tasks
       tags:
         - tasks
       responses:
@@ -17,11 +17,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Task'
+        '500':
+          description: Server internal error
     post:
-      summary: Create task
+      summary: Create a new task
       tags:
         - tasks
       requestBody:
+        description: The task to create
         required: true
         content:
           application/json:
@@ -29,23 +32,29 @@ paths:
               $ref: '#/components/schemas/Task'
       responses:
         '201':
-          description: Created
+          description: The created task
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Task'
-  /tasks/{id}:
+        '400':
+          description: Input error, request body is incorrect
+        '500':
+          description: Internal server error
+  /tasks/{task_id}:
     patch:
-      summary: Patch task
+      summary: Update task
       tags:
         - tasks
       parameters:
-        - in: path
-          name: id
+        - name: task_id
+          in: path
           required: true
           schema:
-            type: string
+            type: integer
+            format: uint
       requestBody:
+        description: Data for update
         required: true
         content:
           application/json:
@@ -53,24 +62,37 @@ paths:
               $ref: '#/components/schemas/Task'
       responses:
         '200':
-          description: Updated
+          description: Task updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input, request body is incorrect
+        '404':
+          description: Task not found
+        '500':
+          description: Internal server error
     delete:
       summary: Delete task
       tags:
         - tasks
       parameters:
-        - in: path
-          name: id
+        - name: task_id
+          in: path
           required: true
           schema:
-            type: string
+            type: integer
+            format: uint
       responses:
         '204':
-          description: Deleted
+          description: Task deleted successfully (no content)
+        '404':
+          description: Task not found
+        '500':
+          description: Internal server error
+
+
 components:
   schemas:
     Task:
