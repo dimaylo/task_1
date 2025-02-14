@@ -71,7 +71,7 @@ func (h *Handler) PatchTasksTaskId(_ context.Context, request tasks.PatchTasksTa
 		Task:   *taskRequest.Task,
 		IsDone: *taskRequest.IsDone,
 	}
-	UpdatedTask, err := h.Service.UpdateTaskByID(taskID, TaskToUpdate)
+	UpdatedTask, err := h.Service.UpdateTask(taskID, TaskToUpdate)
 
 	if err != nil {
 		return nil, err
