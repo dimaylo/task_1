@@ -21,4 +21,4 @@ lint:
 
 commit:
 	git add .
-	powershell -NoProfile -Command "& { $$m = Read-Host \"Введите сообщение коммита\"; git commit -m $$m; git push }"
+	powershell -NoProfile -Command "& { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::InputEncoding = [System.Text.Encoding]::UTF8; $$m = Read-Host \"Введите сообщение коммита\"; git commit -m $$m; git push }"
