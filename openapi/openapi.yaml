@@ -91,8 +91,6 @@ paths:
           description: Task not found
         '500':
           description: Internal server error
-
-
 components:
   schemas:
     Task:
