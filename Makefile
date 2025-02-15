@@ -18,3 +18,7 @@ gen:
 
 lint:
 	golangci-lint run --out-format=colored-line-number
+
+commit:
+	git add .
+	powershell -NoProfile -Command "& { $$m = Read-Host \"Введите сообщение коммита\"; git commit -m $$m; git push }"
