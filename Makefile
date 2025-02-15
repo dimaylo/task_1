@@ -19,6 +19,7 @@ gen:
 lint:
 	golangci-lint run --out-format=colored-line-number
 
-commit:
+git:
 	git add .
-	powershell -NoProfile -Command "& { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::InputEncoding = [System.Text.Encoding]::UTF8; $$m = Read-Host \"Введите сообщение коммита\"; git commit -m $$m; git push }"
+	git commit -m "$(commit)"
+	git push
