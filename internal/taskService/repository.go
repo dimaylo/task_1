@@ -32,7 +32,7 @@ func (r *taskRepository) UpdateTaskByID(id uint, updated Task) (Task, error) {
 	var existing Task
 	err := r.db.First(&existing, id).Error
 	if err != nil {
-		return Task{}, err
+		return existing, err
 	}
 	existing.Task = updated.Task
 	existing.IsDone = updated.IsDone
