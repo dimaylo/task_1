@@ -3,75 +3,92 @@ package handlers
 import (
 	"REST_API/internal/userService"
 	"REST_API/internal/web/users"
-	"golang.org/x/net/context"
+	"context"
+	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
 type UserHandler struct {
-	UserService *userService.UserService
+	Service *userService.UserService
 }
 
 func NewUserHandler(service *userService.UserService) *UserHandler {
 	return &UserHandler{
-		UserService: service,
+		Service: service,
 	}
 }
 
-func (u *UserHandler) GetUsers(_ context.Context, _ users.GetUsersRequestObject) (users.GetUsersResponseObject, error) {
-	allUsers, err := u.UserService.GetAllUsers()
+func (u *UserHandler) GetUsers(ctx context.Context, request users.GetUsersRequestObject) (users.GetUsersResponseObject, error) {
+	allUsers, err := u.Service.GetAllUsers()
 	if err != nil {
-		return nil, err
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error fetching users")
 	}
+
 	var response users.GetUsers200JSONResponse
 	for _, usr := range allUsers {
 		response = append(response, users.User{
-			Id:       &usr.ID,
-			Email:    &usr.Email,
-			Password: &usr.Password,
+			Id:    &usr.ID,
+			Email: &usr.Email,
 		})
 	}
+
 	return response, nil
 }
 
-func (u *UserHandler) PostUsers(_ context.Context, request users.PostUsersRequestObject) (users.PostUsersResponseObject, error) {
-	newUser := userService.User{
-		Email:    *request.Body.Email,
-		Password: *request.Body.Password,
+func (u *UserHandler) PostUsers(ctx context.Context, request users.PostUsersRequestObject) (users.PostUsersResponseObject, error) {
+	userRequest := request.Body
+	if userRequest == nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "Invalid user data")
 	}
-	createdUser, err := u.UserService.CreateUser(newUser)
+
+	userToCreate := userService.User{
+		Email:    *userRequest.Email,
+		Password: *userRequest.Password,
+	}
+	createdUser, err := u.Service.CreateUser(userToCreate)
 	if err != nil {
-		return nil, err
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error creating user")
 	}
+
 	response := users.PostUsers201JSONResponse{
-		Id:       &createdUser.ID,
-		Email:    &createdUser.Email,
-		Password: &createdUser.Password,
+		Id:    &createdUser.ID,
+		Email: &createdUser.Email,
 	}
 	return response, nil
 }
 
-func (u *UserHandler) PatchUsersUserId(_ context.Context, request users.PatchUsersUserIdRequestObject) (users.PatchUsersUserIdResponseObject, error) {
-	updatedData := userService.User{
-		Email:    *request.Body.Email,
-		Password: *request.Body.Password,
-	}
-	userID := request.UserId
-	updatedUser, err := u.UserService.UpdateUserByID(userID, updatedData)
+func (u *UserHandler) DeleteUsersUserId(ctx context.Context, request users.DeleteUsersUserIdRequestObject) (users.DeleteUsersUserIdResponseObject, error) {
+	userId := request.UserId
+
+	err := u.Service.DeleteUserByID(userId)
 	if err != nil {
-		return nil, err
+		return nil, echo.NewHTTPError(http.StatusNotFound, "User not found")
 	}
-	response := users.PatchUsersUserId200JSONResponse{
-		Id:       &updatedUser.ID,
-		Email:    &updatedUser.Email,
-		Password: &updatedUser.Password,
-	}
+
+	response := users.DeleteUsersUserId204Response{}
 	return response, nil
 }
 
-func (u *UserHandler) DeleteUsersUserId(_ context.Context, request users.DeleteUsersUserIdRequestObject) (users.DeleteUsersUserIdResponseObject, error) {
-	userID := request.UserId
-	if err := u.UserService.DeleteUserByID(userID); err != nil {
-		return nil, err
+func (u *UserHandler) PatchUsersUserId(ctx context.Context, request users.PatchUsersUserIdRequestObject) (users.PatchUsersUserIdResponseObject, error) {
+	userId := request.UserId
+	userRequest := request.Body
+	if userRequest == nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "Invalid update data")
 	}
-	response := users.DeleteUsersUserId204Response{}
+
+	updatedUser := userService.User{
+		Email:    *userRequest.Email,
+		Password: *userRequest.Password,
+	}
+
+	updatedUserInfo, err := u.Service.UpdateUserByID(userId, updatedUser)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "User not found")
+	}
+
+	response := users.PatchUsersUserId200JSONResponse{
+		Id:    &updatedUserInfo.ID,
+		Email: &updatedUserInfo.Email,
+	}
 	return response, nil
 }

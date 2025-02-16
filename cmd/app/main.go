@@ -28,11 +28,11 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	strictTasksHandler := tasks.NewStrictHandler(tasksHandler, nil)
-	tasks.RegisterHandlers(e, strictTasksHandler)
+	strictTaskHandler := tasks.NewStrictHandler(tasksHandler, nil)
+	tasks.RegisterHandlers(e, strictTaskHandler)
 
-	strictUsersHandler := users.NewStrictHandler(usersHandler, nil)
-	users.RegisterHandlers(e, strictUsersHandler)
+	strictUserHandler := users.NewStrictHandler(usersHandler, nil)
+	users.RegisterHandlers(e, strictUserHandler)
 
 	if err := e.Start(":8080"); err != nil {
 		log.Fatalf("failed to start with err: %v", err)

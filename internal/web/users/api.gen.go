@@ -149,14 +149,6 @@ func (response GetUsers200JSONResponse) VisitGetUsersResponse(w http.ResponseWri
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetUsers500Response struct {
-}
-
-func (response GetUsers500Response) VisitGetUsersResponse(w http.ResponseWriter) error {
-	w.WriteHeader(500)
-	return nil
-}
-
 type PostUsersRequestObject struct {
 	Body *PostUsersJSONRequestBody
 }
@@ -172,22 +164,6 @@ func (response PostUsers201JSONResponse) VisitPostUsersResponse(w http.ResponseW
 	w.WriteHeader(201)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PostUsers400Response struct {
-}
-
-func (response PostUsers400Response) VisitPostUsersResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type PostUsers500Response struct {
-}
-
-func (response PostUsers500Response) VisitPostUsersResponse(w http.ResponseWriter) error {
-	w.WriteHeader(500)
-	return nil
 }
 
 type DeleteUsersUserIdRequestObject struct {
@@ -214,14 +190,6 @@ func (response DeleteUsersUserId404Response) VisitDeleteUsersUserIdResponse(w ht
 	return nil
 }
 
-type DeleteUsersUserId500Response struct {
-}
-
-func (response DeleteUsersUserId500Response) VisitDeleteUsersUserIdResponse(w http.ResponseWriter) error {
-	w.WriteHeader(500)
-	return nil
-}
-
 type PatchUsersUserIdRequestObject struct {
 	UserId uint `json:"user_id"`
 	Body   *PatchUsersUserIdJSONRequestBody
@@ -238,30 +206,6 @@ func (response PatchUsersUserId200JSONResponse) VisitPatchUsersUserIdResponse(w 
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-type PatchUsersUserId400Response struct {
-}
-
-func (response PatchUsersUserId400Response) VisitPatchUsersUserIdResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type PatchUsersUserId404Response struct {
-}
-
-func (response PatchUsersUserId404Response) VisitPatchUsersUserIdResponse(w http.ResponseWriter) error {
-	w.WriteHeader(404)
-	return nil
-}
-
-type PatchUsersUserId500Response struct {
-}
-
-func (response PatchUsersUserId500Response) VisitPatchUsersUserIdResponse(w http.ResponseWriter) error {
-	w.WriteHeader(500)
-	return nil
 }
 
 // StrictServerInterface represents all server handlers.
