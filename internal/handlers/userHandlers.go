@@ -24,6 +24,10 @@ func (u *UserHandler) GetUsers(ctx context.Context, request users.GetUsersReques
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error fetching users")
 	}
 
+	if len(allUsers) == 0 {
+		return users.GetUsers200JSONResponse{}, nil
+	}
+
 	var response users.GetUsers200JSONResponse
 	for _, usr := range allUsers {
 		response = append(response, users.User{
@@ -59,12 +63,10 @@ func (u *UserHandler) PostUsers(ctx context.Context, request users.PostUsersRequ
 
 func (u *UserHandler) DeleteUsersUserId(ctx context.Context, request users.DeleteUsersUserIdRequestObject) (users.DeleteUsersUserIdResponseObject, error) {
 	userId := request.UserId
-
 	err := u.Service.DeleteUserByID(userId)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "User not found")
 	}
-
 	response := users.DeleteUsersUserId204Response{}
 	return response, nil
 }

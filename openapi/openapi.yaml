@@ -24,7 +24,7 @@ paths:
       tags:
         - tasks
       requestBody:
-        description: The task to create
+        description: The task to create (include user_id)
         required: true
         content:
           application/json:
@@ -54,7 +54,7 @@ paths:
             type: integer
             format: uint
       requestBody:
-        description: Data for update
+        description: Data for update (include user_id if needed)
         required: true
         content:
           application/json:
@@ -91,7 +91,6 @@ paths:
           description: Task not found
         '500':
           description: Internal server error
-
   /users:
     get:
       summary: Get all users
@@ -124,7 +123,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-
   /users/{user_id}:
     patch:
       summary: Update user by ID
@@ -167,7 +165,29 @@ paths:
           description: User deleted
         '404':
           description: User not found
-
+  /users/{user_id}/tasks:
+    get:
+      summary: Get tasks for a specific user
+      tags:
+        - tasks
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: uint
+      responses:
+        '200':
+          description: A list of tasks for the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '404':
+          description: User not found or no tasks found
 components:
   schemas:
     Task:
@@ -180,6 +200,9 @@ components:
           type: string
         is_done:
           type: boolean
+        user_id:
+          type: integer
+          format: uint
     User:
       type: object
       properties:
