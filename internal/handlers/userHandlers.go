@@ -61,16 +61,6 @@ func (u *UserHandler) PostUsers(ctx context.Context, request users.PostUsersRequ
 	return response, nil
 }
 
-func (u *UserHandler) DeleteUsersUserId(ctx context.Context, request users.DeleteUsersUserIdRequestObject) (users.DeleteUsersUserIdResponseObject, error) {
-	userId := request.UserId
-	err := u.Service.DeleteUserByID(userId)
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "User not found")
-	}
-	response := users.DeleteUsersUserId204Response{}
-	return response, nil
-}
-
 func (u *UserHandler) PatchUsersUserId(ctx context.Context, request users.PatchUsersUserIdRequestObject) (users.PatchUsersUserIdResponseObject, error) {
 	userId := request.UserId
 	userRequest := request.Body
@@ -92,5 +82,15 @@ func (u *UserHandler) PatchUsersUserId(ctx context.Context, request users.PatchU
 		Id:    &updatedUserInfo.ID,
 		Email: &updatedUserInfo.Email,
 	}
+	return response, nil
+}
+
+func (u *UserHandler) DeleteUsersUserId(ctx context.Context, request users.DeleteUsersUserIdRequestObject) (users.DeleteUsersUserIdResponseObject, error) {
+	userId := request.UserId
+	err := u.Service.DeleteUserByID(userId)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "User not found")
+	}
+	response := users.DeleteUsersUserId204Response{}
 	return response, nil
 }
